@@ -42,7 +42,7 @@ This is an independent project. To help keep it going, financial contributions a
 
 ## Feedback
 
-Please report issues or suggest features via [GitHub Issues](https://github.com/liamelui/zomdroid/issues)
+Please report issues or suggest features via [GitHub Issues](https://github.com/Not-a-dude/zomdroid/issues)
 
 ## Credits & Third-Party Sources
 - [OpenJDK](https://github.com/openjdk/jdk) (Android port by [PojavLauncherTeam](https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch)) - Used as the Java backend
