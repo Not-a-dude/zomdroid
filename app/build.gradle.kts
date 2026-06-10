@@ -20,7 +20,7 @@ val hasSigningConfig = listOf(
 
 android {
     namespace = "com.zomdroid"
-    compileSdk = 35
+    compileSdk = 37
 
     signingConfigs {
         if (hasSigningConfig) {
