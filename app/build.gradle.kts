@@ -1,4 +1,5 @@
 import java.util.Properties
+import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,7 +19,10 @@ val hasSigningConfig = listOf(
     "RELEASE_KEY_PASSWORD"
 ).all { localProperties[it] != null }
 
-android {
+val appVersionName = "1.2.0"
+val appVersionCode = 3
+
+extensions.configure<ApplicationExtension> {
     namespace = "com.zomdroid"
     compileSdk = 37
 
@@ -38,21 +42,13 @@ android {
         applicationId = "com.zomdroid"
         minSdk = 30
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
             abiFilters.add("arm64-v8a")
-        }
-    }
-
-    applicationVariants.all {
-        val variant = this
-        outputs.all {
-            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            outputImpl.outputFileName = "zomdroid-${variant.buildType.name}-${variant.versionName}.apk"
         }
     }
 
@@ -90,6 +86,14 @@ android {
         }
     }
     ndkVersion = "28.0.13004108"
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("zomdroid-${variant.name}-${appVersionName}.apk")
+        }
+    }
 }
 
 dependencies {
