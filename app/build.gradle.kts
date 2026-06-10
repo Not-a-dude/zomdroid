@@ -19,8 +19,8 @@ val hasSigningConfig = listOf(
     "RELEASE_KEY_PASSWORD"
 ).all { localProperties[it] != null }
 
-val appVersionName = "1.2.0"
-val appVersionCode = 3
+val appVersionName = "1.3.0"
+val appVersionCode = 4
 
 extensions.configure<ApplicationExtension> {
     namespace = "com.zomdroid"
