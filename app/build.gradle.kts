@@ -13,10 +13,10 @@ val localProperties = Properties().apply {
 }
 
 val hasSigningConfig = listOf(
-    "RELEASE_STORE_FILE",
-    "RELEASE_STORE_PASSWORD",
-    "RELEASE_KEY_ALIAS",
-    "RELEASE_KEY_PASSWORD"
+    "ZOMDROID_STORE_FILE",
+    "ZOMDROID_STORE_PASSWORD",
+    "ZOMDROID_KEY_ALIAS",
+    "ZOMDROID_KEY_PASSWORD"
 ).all { localProperties[it] != null }
 
 val appVersionName = "1.3.0"
@@ -29,10 +29,10 @@ extensions.configure<ApplicationExtension> {
     signingConfigs {
         if (hasSigningConfig) {
             create("release") {
-                storeFile = file(localProperties["RELEASE_STORE_FILE"].toString())
-                storePassword = localProperties["RELEASE_STORE_PASSWORD"].toString()
-                keyAlias = localProperties["RELEASE_KEY_ALIAS"].toString()
-                keyPassword = localProperties["RELEASE_KEY_PASSWORD"].toString()
+                storeFile = file(localProperties["ZOMDROID_STORE_FILE"].toString())
+                storePassword = localProperties["ZOMDROID_STORE_PASSWORD"].toString()
+                keyAlias = localProperties["ZOMDROID_KEY_ALIAS"].toString()
+                keyPassword = localProperties["ZOMDROID_KEY_PASSWORD"].toString()
 
             }
         }
