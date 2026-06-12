@@ -29,11 +29,15 @@ jobs:
           echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > app/release.jks
 
       - name: Generate local.properties
+        env:
+          SEC_STORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+          SEC_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          SEC_KEY_PASS: ${{ secrets.KEYSTORE_KEY_PASS }}
         run: |
           echo "ZOMDROID_STORE_FILE=release.jks" >> local.properties
-          echo "ZOMDROID_STORE_PASSWORD='${{ secrets.KEYSTORE_PASS }}'" >> local.properties
-          echo "ZOMDROID_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}'" >> local.properties
-          echo "ZOMDROID_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASS }}'" >> local.properties
+          printf 'ZOMDROID_STORE_PASSWORD=%s\n' "$SEC_STORE_PASS" >> local.properties
+          printf 'ZOMDROID_KEY_ALIAS=%s\n' "$SEC_KEY_ALIAS" >> local.properties
+          printf 'ZOMDROID_KEY_PASSWORD=%s\n' "$SEC_KEY_PASS" >> local.properties
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
