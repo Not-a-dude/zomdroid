@@ -28,6 +28,13 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > app/release.jks
 
+      - name: Generate local.properties
+        run: |
+          echo "ZOMDROID_STORE_FILE=release.jks" >> local.properties
+          echo "ZOMDROID_STORE_PASSWORD='${{ secrets.KEYSTORE_PASS }}'" >> local.properties
+          echo "ZOMDROID_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}'" >> local.properties
+          echo "ZOMDROID_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASS }}'" >> local.properties
+
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
@@ -40,10 +47,6 @@ jobs:
         run: ./gradlew assembleRelease --stacktrace
         env:
           GRADLE_OPTS: "-Dorg.gradle.workers.max=2"
-          ZOMDROID_STORE_FILE: "release.jks"
-          ZOMDROID_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASS }}
-          ZOMDROID_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
-          ZOMDROID_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASS }}
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
