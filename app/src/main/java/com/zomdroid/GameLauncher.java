@@ -4,13 +4,14 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.view.Surface;
 
+import com.zomdroid.data.GameSettings;
 import com.zomdroid.input.InputNativeInterface;
 import com.zomdroid.game.GameInstance;
 
 import java.util.ArrayList;
 
 public class GameLauncher {
-    public static void launch(GameInstance gameInstance) throws ErrnoException {
+    public static void launch(GameInstance gameInstance, GameSettings settings) throws ErrnoException {
 
 /*        // for debug
         Os.setenv("MESA_DEBUG", "1", false);
@@ -39,18 +40,6 @@ public class GameLauncher {
         Os.setenv("GALLIUM_DRIVER", "zink", false);
 
         Os.setenv("ZOMDROID_CACHE_DIR", AppStorage.requireSingleton().getCachePath(), false);
-        Os.setenv("ZOMDROID_RENDERER", LauncherPreferences.requireSingleton().getRenderer().name(), false);
-        switch (LauncherPreferences.requireSingleton().getRenderer()) {
-            case ZINK_ZFA:
-            case ZINK_OSMESA:
-                String vulkanDriverName = LauncherPreferences.requireSingleton().getVulkanDriver().libName;
-                if (vulkanDriverName != null) {
-                    Os.setenv("ZOMDROID_VULKAN_DRIVER_NAME", vulkanDriverName, false);
-                }
-                break;
-        }
-
-        Os.setenv("ZOMDROID_AUDIO_API", LauncherPreferences.requireSingleton().getAudioAPI().name(), false);
 
         Os.setenv("ZOMDROID_GLES_MAJOR", "2", false);
         Os.setenv("ZOMDROID_GLES_MINOR", "1", false);
@@ -61,12 +50,14 @@ public class GameLauncher {
         Os.setenv("ZOMDROID_GLES_MAJOR", "3", true);
         Os.setenv("ZOMDROID_GLES_MINOR", "2", true);*/
 
-        initZomdroidWindow();
+        initZomdroidWindow(settings.getRenderer().name(),
+                settings.getVulkanDriver().libName,
+                settings.getAudioAPI().name());
         InputNativeInterface.sendJoystickConnected();
 
         ArrayList<String> jvmArgs = gameInstance.getJvmArgsAsList();
-        jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + LauncherPreferences.requireSingleton().getRenderer().libName);
-        jvmArgs.add("-Dzomdroid.renderer=" + LauncherPreferences.requireSingleton().getRenderer().name());
+        jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + settings.getRenderer().libName);
+        jvmArgs.add("-Dzomdroid.renderer=" + settings.getRenderer().name());
         //jvmArgs.add("-XX:+PrintFlagsFinal"); // for debugging
         jvmArgs.add("-XX:ErrorFile=/dev/stdout"); // print jvm crash report to stdout for now
 
@@ -82,7 +73,7 @@ public class GameLauncher {
     }
 
 
-    public static native int initZomdroidWindow();
+    public static native int initZomdroidWindow(String renderer, String vulkanDriver, String audioAPI);
 
     public static native void destroyZomdroidWindow();
 

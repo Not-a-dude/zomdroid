@@ -78,7 +78,6 @@ public class ZomdroidApplication extends Application {
     private void init() {
         inited = true;
         GameInstanceManager.init(this);
-        LauncherPreferences.init(this);
         CrashHandler.init();
         updateLauncherVersion();
     }

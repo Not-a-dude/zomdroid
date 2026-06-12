@@ -354,12 +354,14 @@ void zomdroid_deinit() {
 
 }
 
-int zomdroid_init() {
-    const char* renderer_name = getenv("ZOMDROID_RENDERER");
+int zomdroid_init(const char* renderer_name, const char* vulkan_driver, const char* audio_api) {
     if (renderer_name == NULL) {
-        LOGE("Renderer env var is not set");
+        LOGE("Renderer name is NULL");
         exit(1);
-    } else if (strcmp(renderer_name, "ZINK_ZFA") == 0) {
+    }
+    setenv("ZOMDROID_RENDERER", renderer_name, 1);
+
+    if (strcmp(renderer_name, "ZINK_ZFA") == 0) {
         g_zomdroid_renderer = ZINK_ZFA;
     } else if (strcmp(renderer_name, "ZINK_OSMESA") == 0) {
         g_zomdroid_renderer = ZINK_OSMESA;
@@ -369,7 +371,17 @@ int zomdroid_init() {
         LOGE("Unrecognized renderer %s", renderer_name);
         exit(1);
     }
-    g_zomdroid_vulkan_driver_name = getenv("ZOMDROID_VULKAN_DRIVER_NAME");
+
+    if (vulkan_driver != NULL) {
+        setenv("ZOMDROID_VULKAN_DRIVER_NAME", vulkan_driver, 1);
+        g_zomdroid_vulkan_driver_name = strdup(vulkan_driver);
+    } else {
+        g_zomdroid_vulkan_driver_name = NULL;
+    }
+
+    if (audio_api != NULL) {
+        setenv("ZOMDROID_AUDIO_API", audio_api, 1);
+    }
     return 0;
 }
 

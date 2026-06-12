@@ -72,8 +72,18 @@ Java_com_zomdroid_GameLauncher_destroyZomdroidWindow(JNIEnv *env, jobject clazz)
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zomdroid_GameLauncher_initZomdroidWindow(JNIEnv *env, jobject clazz) {
-    return zomdroid_init();
+Java_com_zomdroid_GameLauncher_initZomdroidWindow(JNIEnv *env, jobject clazz, jstring renderer, jstring vulkanDriver, jstring audioAPI) {
+    const char* c_renderer = (*env)->GetStringUTFChars(env, renderer, NULL);
+    const char* c_vulkanDriver = vulkanDriver ? (*env)->GetStringUTFChars(env, vulkanDriver, NULL) : NULL;
+    const char* c_audioAPI = (*env)->GetStringUTFChars(env, audioAPI, NULL);
+
+    jint res = zomdroid_init(c_renderer, c_vulkanDriver, c_audioAPI);
+
+    (*env)->ReleaseStringUTFChars(env, renderer, c_renderer);
+    if (vulkanDriver) (*env)->ReleaseStringUTFChars(env, vulkanDriver, c_vulkanDriver);
+    (*env)->ReleaseStringUTFChars(env, audioAPI, c_audioAPI);
+
+    return res;
 }
 
 JNIEXPORT void JNICALL

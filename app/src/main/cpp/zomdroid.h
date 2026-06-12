@@ -9,7 +9,7 @@ void zomdroid_start_game(const char* game_dir_path, const char* library_dir_path
                          const char** jvm_argv, const char* main_class_name, int argc, const char** argv);
 
 void zomdroid_deinit();
-int zomdroid_init();
+int zomdroid_init(const char* renderer, const char* vulkan_driver, const char* audio_api);
 
 void zomdroid_surface_deinit();
 void zomdroid_surface_init(ANativeWindow* wnd, int width, int height);

@@ -3,6 +3,8 @@ import com.android.build.api.dsl.ApplicationExtension
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.jetbrains.kotlin.compose)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
 val localProperties = Properties().apply {
@@ -19,8 +21,8 @@ val hasSigningConfig = listOf(
     "ZOMDROID_KEY_PASSWORD"
 ).all { localProperties[it] != null }
 
-val appVersionName = "1.3.0"
-val appVersionCode = 4
+val appVersionName = "1.4.0"
+val appVersionCode = 5
 
 extensions.configure<ApplicationExtension> {
     namespace = "com.zomdroid"
@@ -72,6 +74,7 @@ extensions.configure<ApplicationExtension> {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
+        compose = true
         viewBinding = true
     }
     externalNativeBuild {
@@ -108,7 +111,27 @@ dependencies {
     implementation(libs.commons.compress)
     implementation(libs.xz)
     implementation(libs.legacy.support.v4)
+
+    // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.preferences)
+
+    // Kotlinx
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
