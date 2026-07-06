@@ -53,102 +53,93 @@ fun <T> NewGameInstanceContent(
     onInstall: () -> Unit,
     onNavigateToWiki: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.fragment_label_new_game_instance)) },
-                actions = {
-                    IconButton(onClick = onInstall) {
-                        Icon(
-                            painter = painterResource(R.drawable.outline_check_24),
-                            contentDescription = "Install"
-                        )
-                    }
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Instance name
+        OutlinedTextField(
+            value = instanceName,
+            onValueChange = onInstanceNameChanged,
+            label = { Text(stringResource(R.string.game_instance_name)) },
+            modifier = Modifier.fillMaxWidth(),
+            isError = nameError != null,
+            supportingText = {
+                nameError?.let {
+                    Text(stringResource(it))
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            }
+        )
+
+        // Preset (Spinner)
+        var expanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
         ) {
-            // Instance name
             OutlinedTextField(
-                value = instanceName,
-                onValueChange = onInstanceNameChanged,
-                label = { Text(stringResource(R.string.game_instance_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = nameError != null,
-                supportingText = {
-                    nameError?.let {
-                        Text(stringResource(it))
-                    }
+                value = selectedPreset?.toString() ?: "",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.game_instance_preset)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                colors = ExposedDropdownMenuDefaults.textFieldColors()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                presets.forEach { preset ->
+                    DropdownMenuItem(
+                        text = { Text(preset.toString()) },
+                        onClick = {
+                            onPresetSelected(preset)
+                            expanded = false
+                        }
+                    )
                 }
+            }
+        }
+
+        // File selection
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = gameFilesZipName,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.game_instance_files)) },
+                placeholder = { Text(stringResource(R.string.game_instance_browse_files_hint)) },
+                modifier = Modifier.weight(1f)
             )
 
-            // Preset (Spinner)
-            var expanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedPreset?.toString() ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.game_instance_preset)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    colors = ExposedDropdownMenuDefaults.textFieldColors()
+            IconButton(onClick = { onNavigateToWiki() }) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_help_outline_24),
+                    contentDescription = "Help"
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    presets.forEach { preset ->
-                        DropdownMenuItem(
-                            text = { Text(preset.toString()) },
-                            onClick = {
-                                onPresetSelected(preset)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
             }
 
-            // File selection
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = gameFilesZipName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.game_instance_files)) },
-                    placeholder = { Text(stringResource(R.string.game_instance_browse_files_hint)) },
-                    modifier = Modifier.weight(1f)
+            IconButton(onClick = onPickFile) {
+                Icon(
+                    painter = painterResource(R.drawable.outline_drive_folder_upload_24),
+                    contentDescription = "Browse"
                 )
-
-                IconButton(onClick = { onNavigateToWiki() }) {
-                    Icon(
-                        painter = painterResource(R.drawable.baseline_help_outline_24),
-                        contentDescription = "Help"
-                    )
-                }
-
-                IconButton(onClick = onPickFile) {
-                    Icon(
-                        painter = painterResource(R.drawable.outline_drive_folder_upload_24),
-                        contentDescription = "Browse"
-                    )
-                }
             }
+        }
+
+        // Install button
+        Button(
+            onClick = onInstall,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.game_instance_install))
         }
     }
 }
