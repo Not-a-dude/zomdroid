@@ -19,7 +19,7 @@ composeBom = "2026.05.01"
 activityCompose = "1.13.0"
 kotlinxCoroutines = "1.11.0"
 kotlinxSerialization = "1.11.0"
-material3 = "1.5.0-alpha21"
+material3 = "1.5.0-alpha23"
 datastore = "1.2.1"
 
 [libraries]
