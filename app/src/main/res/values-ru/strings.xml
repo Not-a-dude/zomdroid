@@ -1,0 +1,87 @@
+<resources>
+    <string name="legal_notice_title">Правовая информация</string>
+    <string name="legal_notice_message">Этот лаунчер - сторонний инструмент, для работы которого требуются оригинальные файлы Project Zomboid. Для использования этого ПО вы должны владеть легально приобретённой копией игры. Разработчик лаунчера не связан с создателями оригинальной игры и не несёт ответственности за любые правовые последствия, возникающие в результате использования этого ПО.</string>
+
+    <string name="fragment_label_launcher">Лаунчер</string>
+    <string name="fragment_label_new_game_instance">Новый экземпляр игры</string>
+    <string name="fragment_label_settings">Настройки</string>
+    <string name="fragment_label_controls_editor">Редактор управления</string>
+    <string name="fragment_label_wiki">Вики</string>
+
+    <string name="controls_editor_instructions">Долгое нажатие на пустом месте открывает контекстное меню. Изменения сохраняются автоматически по завершению</string>
+    <string name="controls_editor_add_element">Добавить элемент управления</string>
+    <string name="control_element_scale">Масштаб</string>
+    <string name="control_element_text">Текст</string>
+    <string name="control_element_text_empty">Пусто</string>
+    <string name="control_element_bindings">Привязки</string>
+    <string name="control_element_select_binding">Выбрать привязку</string>
+    <string name="control_element_binding_invalid">Неверная привязка</string>
+    <string name="control_element_opacity">Прозрачность</string>
+    <string name="control_element_binding_left">Привязка: влево</string>
+    <string name="control_element_binding_up">Привязка: вверх</string>
+    <string name="control_element_binding_right">Привязка: вправо</string>
+    <string name="control_element_binding_down">Привязка: вниз</string>
+    <string name="control_element_input_type_mnk">Мышь и клавиатура</string>
+    <string name="control_element_input_type_gamepad">Геймпад</string>
+
+    <string name="game_instance_name">Название</string>
+    <string name="game_instance_preset">Пресет</string>
+    <string name="game_instance_files">Файлы игры (.zip)</string>
+    <string name="game_instance_browse_files_hint">Выбрать файлы…</string>
+    <string name="game_instance_no_file_selected">Файлы не выбраны</string>
+    <string name="game_instance_name_invalid">Недопустимое название</string>
+    <string name="game_instance_name_already_exists">Уже существует</string>
+    <string name="game_instance_unsupported_extension">Поддерживаются только архивы .zip</string>
+
+    <string name="dialog_button_ok">OK</string>
+    <string name="dialog_button_accept">Принять</string>
+    <string name="dialog_button_quit">Выйти</string>
+    <string name="dialog_button_view_guide">Открыть руководство</string>
+    <string name="dialog_button_close">Закрыть</string>
+    <string name="dialog_button_confirm">Подтвердить</string>
+    <string name="dialog_button_cancel">Отмена</string>
+    <string name="dialog_title_delete_game_instance">Удалить экземпляр игры?</string>
+    <string name="dialog_title_info">Информация</string>
+    <string name="dialog_title_fatal_error">Критическая ошибка</string>
+    <string name="dialog_title_creating_instance">Создание экземпляра игры…</string>
+    <string name="dialog_title_instance_created">Экземпляр успешно создан</string>
+    <string name="dialog_title_failed_to_create_instance">Не удалось создать экземпляр</string>
+    <string name="dialog_title_deleting_game_instance">Удаление экземпляра игры…</string>
+    <string name="dialog_title_instance_deleted">Экземпляр успешно удалён</string>
+    <string name="dialog_title_failed_to_delete_instance">Не удалось удалить экземпляр</string>
+    <string name="dialog_title_installing_dependencies">Установка зависимостей…</string>
+    <string name="dialog_title_dependencies_installed">Зависимости успешно установлены</string>
+    <string name="dialog_title_failed_to_install_dependencies">Не удалось установить зависимости</string>
+    <string name="dialog_title_donate">Поддержать</string>
+    <string name="dialog_title_game_files_missing">Файлы игры отсутствуют</string>
+    <string name="dialog_title_game_files_not_for_linux">Установленные файлы не поддерживаются</string>
+
+    <string name="installation_not_finished">Установка не завершена</string>
+    <string name="dependencies_not_installed">Зависимости Zomdroid не установлены</string>
+
+    <string name="settings_renderer">Рендер</string>
+    <string name="settings_vulkan_driver">Драйвер Vulkan</string>
+    <string name="settings_resolution_scale">Масштаб разрешения</string>
+    <string name="settings_audio_api">Аудио API</string>
+
+    <string name="nav_menu_controls_editor">Редактор управления</string>
+    <string name="nav_menu_manage_storage">Управление хранилищем</string>
+    <string name="nav_menu_donate">Поддержать</string>
+    <string name="control_element_delete">Удалить элемент</string>
+    <string name="control_element_input_type">Тип ввода</string>
+    <string name="control_element_stick_binding">Привязка стика</string>
+    <string name="control_element_icon">Значок</string>
+
+    <string name="game_instance_manage_storage">Управление хранилищем</string>
+    <string name="game_instance_delete">Удалить</string>
+    <string name="game_instance_install">Установить</string>
+
+    <string name="donate_message">Нравится приложение и хотите помочь его развитию? Поддержите разработку на ko-fi.com/liamelui</string>
+
+    <string name="app_aborted">Приложение столкнулось с непредвиденной ошибкой и было закрыто</string>
+    <string name="share_logs">Поделиться логами</string>
+
+    <string name="delete_game_instance">Все файлы игры и данные (сохранения, моды, избранные серверы и т. д.), связанные с этим экземпляром, будут безвозвратно утеряны</string>
+    <string name="game_files_missing">Убедитесь, что ProjectZomboid64 находится в корне .zip-архива, используемого для установки. Сверьтесь с руководством в вики, чтобы убедиться, что файлы упакованы правильно</string>
+    <string name="game_files_not_for_linux">Требуется версия Project Zomboid для Linux. Сверьтесь с руководством в вики, чтобы убедиться, что загружены правильные файлы</string>
+</resources>
