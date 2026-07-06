@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.zomdroid.ui.theme.ZomdroidTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,5 +54,19 @@ fun <T : Enum<T>> SettingsDropdown(
                 )
             }
         }
+    }
+}
+
+private enum class SettingsDropdownPreviewOption { VULKAN, GL4ES, ZINK }
+
+@Preview(showBackground = true)
+@Composable
+private fun SettingsDropdownPreview() {
+    ZomdroidTheme {
+        SettingsDropdown(
+            options = SettingsDropdownPreviewOption.entries,
+            selectedOption = SettingsDropdownPreviewOption.VULKAN,
+            onOptionSelected = {}
+        )
     }
 }

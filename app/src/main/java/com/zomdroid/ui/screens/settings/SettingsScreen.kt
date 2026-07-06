@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zomdroid.LauncherPreferences
 import com.zomdroid.R
+import com.zomdroid.data.GameSettings
 import com.zomdroid.ui.screens.settings.components.SettingsDropdown
 import com.zomdroid.ui.screens.settings.components.SettingsSection
 import com.zomdroid.ui.theme.ZomdroidTheme
@@ -34,6 +35,25 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
 
+    SettingsScreenContent(
+        settings = settings,
+        onRendererSelected = viewModel::setRenderer,
+        onVulkanDriverSelected = viewModel::setVulkanDriver,
+        onRenderScaleChanged = viewModel::setRenderScale,
+        onAudioApiSelected = viewModel::setAudioAPI
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@ExperimentalMaterial3ExpressiveApi
+@Composable
+fun SettingsScreenContent(
+    settings: GameSettings,
+    onRendererSelected: (LauncherPreferences.Renderer) -> Unit,
+    onVulkanDriverSelected: (LauncherPreferences.VulkanDriver) -> Unit,
+    onRenderScaleChanged: (Float) -> Unit,
+    onAudioApiSelected: (LauncherPreferences.AudioAPI) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,7 +66,7 @@ fun SettingsScreen(
             SettingsDropdown(
                 options = LauncherPreferences.Renderer.entries,
                 selectedOption = settings.renderer,
-                onOptionSelected = { viewModel.setRenderer(it) }
+                onOptionSelected = onRendererSelected
             )
         }
 
@@ -56,7 +76,7 @@ fun SettingsScreen(
                 SettingsDropdown(
                     options = LauncherPreferences.VulkanDriver.entries,
                     selectedOption = settings.vulkanDriver,
-                    onOptionSelected = { viewModel.setVulkanDriver(it) }
+                    onOptionSelected = onVulkanDriverSelected
                 )
             }
         }
@@ -74,7 +94,7 @@ fun SettingsScreen(
             Slider(
                 value = settings.renderScale,
                 valueRange = 0.25f..1.0f,
-                onValueChange = { viewModel.setRenderScale(it) }
+                onValueChange = onRenderScaleChanged
             )
         }
 
@@ -83,17 +103,23 @@ fun SettingsScreen(
             SettingsDropdown(
                 options = LauncherPreferences.AudioAPI.entries,
                 selectedOption = settings.audioAPI,
-                onOptionSelected = { viewModel.setAudioAPI(it) }
+                onOptionSelected = onAudioApiSelected
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
     ZomdroidTheme {
-        SettingsScreen()
+        SettingsScreenContent(
+            settings = GameSettings(),
+            onRendererSelected = {},
+            onVulkanDriverSelected = {},
+            onRenderScaleChanged = {},
+            onAudioApiSelected = {}
+        )
     }
 }

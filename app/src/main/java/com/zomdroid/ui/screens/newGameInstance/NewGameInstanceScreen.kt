@@ -15,7 +15,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zomdroid.R
 import com.zomdroid.ui.theme.ZomdroidTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewGameInstance(
     viewModel: NewGameInstanceViewModel = viewModel(),
@@ -26,12 +25,40 @@ fun NewGameInstance(
         uri?.let { viewModel.onFileSelected(it) }
     }
 
+    NewGameInstanceContent(
+        instanceName = viewModel.instanceName,
+        nameError = viewModel.nameError,
+        presets = viewModel.presets,
+        selectedPreset = viewModel.selectedPreset,
+        gameFilesZipName = viewModel.gameFilesZipName,
+        onInstanceNameChanged = viewModel::onInstanceNameChanged,
+        onPresetSelected = { viewModel.selectedPreset = it },
+        onPickFile = { launcher.launch("application/zip") },
+        onInstall = { viewModel.install(onNavigateBack) },
+        onNavigateToWiki = onNavigateToWiki
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> NewGameInstanceContent(
+    instanceName: String,
+    nameError: Int?,
+    presets: List<T>,
+    selectedPreset: T?,
+    gameFilesZipName: String,
+    onInstanceNameChanged: (String) -> Unit,
+    onPresetSelected: (T) -> Unit,
+    onPickFile: () -> Unit,
+    onInstall: () -> Unit,
+    onNavigateToWiki: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.fragment_label_new_game_instance)) },
                 actions = {
-                    IconButton(onClick = { viewModel.install(onNavigateBack) }) {
+                    IconButton(onClick = onInstall) {
                         Icon(
                             painter = painterResource(R.drawable.outline_check_24),
                             contentDescription = "Install"
@@ -50,13 +77,13 @@ fun NewGameInstance(
         ) {
             // Instance name
             OutlinedTextField(
-                value = viewModel.instanceName,
-                onValueChange = viewModel::onInstanceNameChanged,
+                value = instanceName,
+                onValueChange = onInstanceNameChanged,
                 label = { Text(stringResource(R.string.game_instance_name)) },
                 modifier = Modifier.fillMaxWidth(),
-                isError = viewModel.nameError != null,
+                isError = nameError != null,
                 supportingText = {
-                    viewModel.nameError?.let {
+                    nameError?.let {
                         Text(stringResource(it))
                     }
                 }
@@ -69,7 +96,7 @@ fun NewGameInstance(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = viewModel.selectedPreset?.toString() ?: "",
+                    value = selectedPreset?.toString() ?: "",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.game_instance_preset)) },
@@ -81,11 +108,11 @@ fun NewGameInstance(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    viewModel.presets.forEach { preset ->
+                    presets.forEach { preset ->
                         DropdownMenuItem(
                             text = { Text(preset.toString()) },
                             onClick = {
-                                viewModel.selectedPreset = preset
+                                onPresetSelected(preset)
                                 expanded = false
                             }
                         )
@@ -100,22 +127,22 @@ fun NewGameInstance(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    value = viewModel.gameFilesZipName,
+                    value = gameFilesZipName,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.game_instance_files)) },
                     placeholder = { Text(stringResource(R.string.game_instance_browse_files_hint)) },
                     modifier = Modifier.weight(1f)
                 )
-                
+
                 IconButton(onClick = { onNavigateToWiki() }) {
                     Icon(
                         painter = painterResource(R.drawable.baseline_help_outline_24),
                         contentDescription = "Help"
                     )
                 }
-                
-                IconButton(onClick = { launcher.launch("application/zip") }) {
+
+                IconButton(onClick = onPickFile) {
                     Icon(
                         painter = painterResource(R.drawable.outline_drive_folder_upload_24),
                         contentDescription = "Browse"
@@ -126,10 +153,21 @@ fun NewGameInstance(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun NewGameInstancePreview() {
     ZomdroidTheme {
-        NewGameInstance()
+        NewGameInstanceContent(
+            instanceName = "My instance",
+            nameError = null,
+            presets = listOf("Build 41", "Build 42"),
+            selectedPreset = "Build 41",
+            gameFilesZipName = "",
+            onInstanceNameChanged = {},
+            onPresetSelected = {},
+            onPickFile = {},
+            onInstall = {},
+            onNavigateToWiki = {}
+        )
     }
 }

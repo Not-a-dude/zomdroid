@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,6 +21,7 @@ import com.zomdroid.C
 import com.zomdroid.GameActivity
 import com.zomdroid.R
 import com.zomdroid.game.GameInstance
+import com.zomdroid.ui.theme.ZomdroidTheme
 
 @Composable
 fun LauncherScreen(
@@ -30,9 +32,6 @@ fun LauncherScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    var gameFilesMissingInstance by remember { mutableStateOf<GameInstance?>(null) }
-    var gameFilesNotForLinuxInstance by remember { mutableStateOf<GameInstance?>(null) }
 
     DisposableEffect(Unit) {
         viewModel.bindInstallerService()
@@ -47,6 +46,49 @@ fun LauncherScreen(
         }
     }
 
+    LauncherScreenContent(
+        uiState = uiState,
+        onAcceptLegalNotice = viewModel::acceptLegalNotice,
+        onClearTaskState = viewModel::clearTaskState,
+        onLaunchGame = { instance ->
+            val intent = Intent(context, GameActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(GameActivity.EXTRA_GAME_INSTANCE_NAME, instance.name)
+            }
+            context.startActivity(intent)
+            onGameStarted()
+        },
+        onManageStorage = { instance ->
+            val folderUri = DocumentsContract.buildDocumentUri(C.STORAGE_PROVIDER_AUTHORITY, instance.homePath)
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(folderUri, DocumentsContract.Document.MIME_TYPE_DIR)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, null))
+        },
+        onDeleteInstance = viewModel::deleteGameInstance,
+        onNavigateToNewInstance = onNavigateToNewInstance,
+        onNavigateToWiki = onNavigateToWiki
+    )
+}
+
+@Composable
+fun LauncherScreenContent(
+    uiState: LauncherUiState,
+    onAcceptLegalNotice: () -> Unit,
+    onClearTaskState: () -> Unit,
+    onLaunchGame: (GameInstance) -> Unit,
+    onManageStorage: (GameInstance) -> Unit,
+    onDeleteInstance: (GameInstance) -> Unit,
+    onNavigateToNewInstance: () -> Unit,
+    onNavigateToWiki: () -> Unit
+) {
+    val context = LocalContext.current
+
+    var gameFilesMissingInstance by remember { mutableStateOf<GameInstance?>(null) }
+    var gameFilesNotForLinuxInstance by remember { mutableStateOf<GameInstance?>(null) }
+
     // Legal Notice Dialog
     if (!uiState.isLegalNoticeAccepted) {
         AlertDialog(
@@ -54,7 +96,7 @@ fun LauncherScreen(
             title = { Text(stringResource(R.string.legal_notice_title)) },
             text = { Text(stringResource(R.string.legal_notice_message)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.acceptLegalNotice() }) {
+                TextButton(onClick = onAcceptLegalNotice) {
                     Text(stringResource(R.string.dialog_button_accept))
                 }
             },
@@ -67,7 +109,7 @@ fun LauncherScreen(
         AlertDialog(
             onDismissRequest = {
                 if (taskState.isFinished || taskState.isFinishedWithError) {
-                    viewModel.clearTaskState()
+                    onClearTaskState()
                 }
             },
             title = { taskState.title?.let { Text(it) } },
@@ -89,7 +131,7 @@ fun LauncherScreen(
             },
             confirmButton = {
                 if (taskState.isFinished || taskState.isFinishedWithError) {
-                    TextButton(onClick = { viewModel.clearTaskState() }) {
+                    TextButton(onClick = onClearTaskState) {
                         Text(stringResource(R.string.dialog_button_ok))
                     }
                 }
@@ -171,26 +213,11 @@ fun LauncherScreen(
                         } else if (!uiState.areDependenciesInstalled) {
                             Toast.makeText(context, R.string.dependencies_not_installed, Toast.LENGTH_SHORT).show()
                         } else {
-                            val intent = Intent(context, GameActivity::class.java).apply {
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                putExtra(GameActivity.EXTRA_GAME_INSTANCE_NAME, instance.name)
-                            }
-                            context.startActivity(intent)
-                            onGameStarted()
+                            onLaunchGame(instance)
                         }
                     },
-                    onManageStorage = {
-                        val folderUri = DocumentsContract.buildDocumentUri(C.STORAGE_PROVIDER_AUTHORITY, instance.homePath)
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(folderUri, DocumentsContract.Document.MIME_TYPE_DIR)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                        context.startActivity(Intent.createChooser(intent, null))
-                    },
-                    onDelete = {
-                        viewModel.deleteGameInstance(instance)
-                    }
+                    onManageStorage = { onManageStorage(instance) },
+                    onDelete = { onDeleteInstance(instance) }
                 )
             }
         }
@@ -270,5 +297,39 @@ fun GameInstanceItem(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LauncherScreenPreview() {
+    ZomdroidTheme {
+        LauncherScreenContent(
+            uiState = LauncherUiState(),
+            onAcceptLegalNotice = {},
+            onClearTaskState = {},
+            onLaunchGame = {},
+            onManageStorage = {},
+            onDeleteInstance = {},
+            onNavigateToNewInstance = {},
+            onNavigateToWiki = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LauncherScreenLegalNoticePreview() {
+    ZomdroidTheme {
+        LauncherScreenContent(
+            uiState = LauncherUiState(isLegalNoticeAccepted = false),
+            onAcceptLegalNotice = {},
+            onClearTaskState = {},
+            onLaunchGame = {},
+            onManageStorage = {},
+            onDeleteInstance = {},
+            onNavigateToNewInstance = {},
+            onNavigateToWiki = {}
+        )
     }
 }
