@@ -14,7 +14,7 @@ val Context.dataStore by preferencesDataStore(name = "settings")
 
 data class GameSettings(
     val renderer: Renderer = if (isKgsl) Renderer.ZINK_ZFA else Renderer.GL4ES,
-    val vulkanDriver: VulkanDriver = if (isKgsl) VulkanDriver.FREEDRENO else VulkanDriver.SYSTEM_DEFAULT,
+    val vulkanDriver: VulkanDriver = if (isKgsl) VulkanDriver.TURNIP else VulkanDriver.SYSTEM_DEFAULT,
     val audioAPI: AudioAPI = AudioAPI.AAUDIO,
     val renderScale: Float = 1.0f,
     val isDebug: Boolean = false
