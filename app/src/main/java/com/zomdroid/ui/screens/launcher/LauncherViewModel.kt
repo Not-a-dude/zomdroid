@@ -25,6 +25,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         _uiState.update { it.copy(taskState = state) }
         if (state?.isFinished == true || state?.isFinishedWithError == true) {
             refreshGameInstances()
+            refreshDependenciesState()
         }
     }
 
@@ -51,11 +52,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     init {
         val isAccepted = sharedPreferences.getBoolean(C.shprefs.keys.IS_LEGAL_NOTICE_ACCEPTED, false)
-        val areDepsInstalled = sharedPreferences.getBoolean(C.shprefs.keys.ARE_DEPENDENCIES_INSTALLED, false)
-        _uiState.update { it.copy(
-            isLegalNoticeAccepted = isAccepted,
-            areDependenciesInstalled = areDepsInstalled
-        ) }
+        _uiState.update { it.copy(isLegalNoticeAccepted = isAccepted) }
+        refreshDependenciesState()
         refreshGameInstances()
 
         val filter = IntentFilter(InstallerService.ACTION_STARTED)
@@ -64,6 +62,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun refreshGameInstances() {
         _uiState.update { it.copy(gameInstances = GameInstanceManager.requireSingleton().instances.toList()) }
+    }
+
+    private fun refreshDependenciesState() {
+        val installed = sharedPreferences.getBoolean(C.shprefs.keys.ARE_DEPENDENCIES_INSTALLED, false)
+        _uiState.update { it.copy(areDependenciesInstalled = installed) }
     }
 
     fun acceptLegalNotice() {
