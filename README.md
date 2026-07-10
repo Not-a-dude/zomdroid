@@ -51,7 +51,7 @@ Please report issues or suggest features via [GitHub Issues](https://github.com/
 
 - [GL4ES](https://github.com/ptitSeb/gl4es) - Used as the rendering backend
 
-- [Mesa](https://gitlab.freedesktop.org/mesa/mesa) (Turnip driver builds by [K11MCH1](https://github.com/K11MCH1/AdrenoToolsDrivers)) - Used as the rendering backend (Zink, Freedreno Turnip driver)
+- [Mesa](https://gitlab.freedesktop.org/mesa/mesa) (Turnip driver builds by [StevenMXZ](https://github.com/StevenMXZ/Adreno-Tools-Drivers)) - Used as the rendering backend (Zink, Freedreno Turnip driver)
 
 - [ByteBuddy](https://github.com/raphw/byte-buddy) - Used for java agent creation and runtime code generation
 
