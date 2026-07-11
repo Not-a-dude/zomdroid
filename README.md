@@ -9,6 +9,7 @@
 
 - Supports **Project Zomboid Build 41** (tested on 41.78.16) and **Build 42** (up to 42.7, versions 42.8 and later are not supported) 
 - Supports **Lua mods**
+- Supports **physical controllers**
 - Currently **single-player only**
 
 ## System requirements 
@@ -19,11 +20,11 @@
 
 ## Roadmap
 
-Planned features in order of priority:
+Planned improvements in order of priority:
 
 1. Expand GPU and device compatibility
-2. Optimize and improve performance
-3. Add external input support (mouse and keyboard, physical controller) 
+2. Optimize performance and stability
+3. Add mouse and keyboard support
 4. Add multiplayer support
 
 ## Prebuilt binaries and JARs
