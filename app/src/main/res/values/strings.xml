@@ -67,10 +67,10 @@
     <string name="settings_vulkan_driver">Vulkan driver</string>
     <string name="settings_resolution_scale">Resolution scale</string>
     <string name="settings_audio_api">Audio API</string>
+    <string name="settings_donate">Donate</string>
 
-    <string name="nav_menu_controls_editor">Controls editor</string>
-    <string name="nav_menu_manage_storage">Manage storage</string>
-    <string name="nav_menu_donate">Donate</string>
+    <string name="action_controls_editor">Controls editor</string>
+    <string name="action_manage_storage">Manage storage</string>
     <string name="control_element_delete">Delete element</string>
     <string name="control_element_input_type">Input type</string>
     <string name="control_element_stick_binding">Stick Binding</string>
