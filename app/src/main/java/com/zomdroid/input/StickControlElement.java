@@ -56,13 +56,13 @@ public class StickControlElement extends AbstractControlElement {
             case GAMEPAD:
                 switch (getBindingStick()) {
                     case LEFT_JOYSTICK: {
-                        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LX.code, nx);
-                        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LY.code, ny);
+                        InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_LX.code, nx);
+                        InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_LY.code, ny);
                         break;
                     }
                     case RIGHT_JOYSTICK: {
-                        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RX.code, nx);
-                        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RY.code, ny);
+                        InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_RX.code, nx);
+                        InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_RY.code, ny);
                         break;
                     }
                 }

@@ -115,23 +115,36 @@ Java_com_zomdroid_input_InputNativeInterface_sendMouseButton(JNIEnv *env, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_com_zomdroid_input_InputNativeInterface_sendJoystickAxis(JNIEnv *env, jclass clazz, jint axis, jfloat state) {
-    zomdroid_event_joystick_axis(axis, state);
+Java_com_zomdroid_input_InputNativeInterface_sendJoystickAxis(JNIEnv *env, jclass clazz, jint controllerId, jint axis, jfloat state) {
+    zomdroid_event_joystick_axis(controllerId, axis, state);
 }
 
 JNIEXPORT void JNICALL
-Java_com_zomdroid_input_InputNativeInterface_sendJoystickDpad(JNIEnv *env, jclass clazz, jint dpad,
+Java_com_zomdroid_input_InputNativeInterface_sendJoystickDpad(JNIEnv *env, jclass clazz, jint controllerId, jint dpad,
                                                jchar state) {
-    zomdroid_event_joystick_dpad(dpad, state);
+    zomdroid_event_joystick_dpad(controllerId, dpad, state);
 }
 
 JNIEXPORT void JNICALL
-Java_com_zomdroid_input_InputNativeInterface_sendJoystickButton(JNIEnv *env, jclass clazz, jint button,
+Java_com_zomdroid_input_InputNativeInterface_sendJoystickButton(JNIEnv *env, jclass clazz, jint controllerId, jint button,
                                                  jboolean pressed) {
-    zomdroid_event_joystick_button(button, pressed);
+    zomdroid_event_joystick_button(controllerId, button, pressed);
 }
 
 JNIEXPORT void JNICALL
-Java_com_zomdroid_input_InputNativeInterface_sendJoystickConnected(JNIEnv *env, jclass clazz) {
-    zomdroid_event_joystick_connected();
+Java_com_zomdroid_input_InputNativeInterface_sendJoystickConnected(JNIEnv *env, jclass clazz, jint controllerId, jstring controllerName) {
+    const char* name = NULL;
+    if (controllerName != NULL) {
+        name = (*env)->GetStringUTFChars(env, controllerName, NULL);
+    }
+
+    zomdroid_event_joystick_connected(controllerId, name);
+    if (name != NULL) {
+        (*env)->ReleaseStringUTFChars(env, controllerName, name);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_zomdroid_input_InputNativeInterface_sendJoystickDisconnected(JNIEnv *env, jclass clazz, jint controllerId) {
+    zomdroid_event_joystick_disconnected(controllerId);
 }

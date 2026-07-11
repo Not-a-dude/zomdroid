@@ -53,7 +53,7 @@ public class DpadControlElement extends AbstractControlElement {
         }
 
         if (this.inputType == InputType.GAMEPAD)
-            InputNativeInterface.sendJoystickDpad(0, (char) state);
+            InputNativeInterface.sendJoystickDpad(InputNativeInterface.VIRTUAL_CONTROLLER_ID, 0, (char) state);
         else if (this.inputType == InputType.MNK) {
             handleMNKBinding(getBindingUp(), (state & 0x1) != 0);
             handleMNKBinding(getBindingRight(), (state & 0x2) != 0);

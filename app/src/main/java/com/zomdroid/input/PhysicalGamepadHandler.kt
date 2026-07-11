@@ -8,13 +8,14 @@ import android.view.MotionEvent
 class PhysicalGamepadHandler : InputManager.InputDeviceListener {
 
     private var currentDpadState = 0
+    private val connectedDeviceIds = mutableSetOf<Int>()
 
     fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (!isGamepadDevice(event.device)) return false
 
         val button = mapKeyCodeToButton(keyCode)
         if (button != -1) {
-            InputNativeInterface.sendJoystickButton(button, true)
+            InputNativeInterface.sendJoystickButton(event.deviceId, button, true)
             return true
         }
 
@@ -22,7 +23,7 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
         val dpadState = getDpadStateFromKeys(keyCode)
         if (dpadState != -1) {
             currentDpadState = currentDpadState or dpadState
-            InputNativeInterface.sendJoystickDpad(0, currentDpadState.toChar())
+            InputNativeInterface.sendJoystickDpad(event.deviceId, 0, currentDpadState.toChar())
             return true
         }
 
@@ -34,14 +35,14 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
 
         val button = mapKeyCodeToButton(keyCode)
         if (button != -1) {
-            InputNativeInterface.sendJoystickButton(button, false)
+            InputNativeInterface.sendJoystickButton(event.deviceId, button, false)
             return true
         }
 
         val dpadState = getDpadStateFromKeys(keyCode)
         if (dpadState != -1) {
             currentDpadState = currentDpadState and dpadState.inv()
-            InputNativeInterface.sendJoystickDpad(0, currentDpadState.toChar())
+            InputNativeInterface.sendJoystickDpad(event.deviceId, 0, currentDpadState.toChar())
             return true
         }
 
@@ -52,9 +53,11 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
         if (!isGamepadDevice(event.device)) return false
         if (event.action != MotionEvent.ACTION_MOVE) return false
 
+        val deviceId = event.deviceId
+
         // Left stick
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LX.code, event.getAxisValue(MotionEvent.AXIS_X))
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LY.code, event.getAxisValue(MotionEvent.AXIS_Y))
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_LX.code, event.getAxisValue(MotionEvent.AXIS_X))
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_LY.code, event.getAxisValue(MotionEvent.AXIS_Y))
 
         // Right stick
         var rx = event.getAxisValue(MotionEvent.AXIS_Z)
@@ -63,14 +66,14 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
             rx = event.getAxisValue(MotionEvent.AXIS_RX)
             ry = event.getAxisValue(MotionEvent.AXIS_RY)
         }
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RX.code, rx)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RY.code, ry)
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_RX.code, rx)
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_RY.code, ry)
 
         // Triggers
         val lt = event.getAxisValue(MotionEvent.AXIS_BRAKE).let { if (it == 0f) event.getAxisValue(MotionEvent.AXIS_LTRIGGER) else it }
         val rt = event.getAxisValue(MotionEvent.AXIS_GAS).let { if (it == 0f) event.getAxisValue(MotionEvent.AXIS_RTRIGGER) else it }
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LT.code, lt)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RT.code, rt)
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_LT.code, lt)
+        InputNativeInterface.sendJoystickAxis(deviceId, GLFWBinding.GAMEPAD_AXIS_RT.code, rt)
 
         // Dpad from axes (Hat)
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
@@ -84,9 +87,18 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
 
         // Always send the merged state, otherwise releasing the hat back to (0, 0)
         // would never be reported and the dpad would appear stuck
-        InputNativeInterface.sendJoystickDpad(0, (hatState or currentDpadState).toChar())
+        InputNativeInterface.sendJoystickDpad(deviceId, 0, (hatState or currentDpadState).toChar())
 
         return true
+    }
+
+    fun notifyAlreadyConnectedDevices(inputManager: InputManager) {
+        for (id in inputManager.inputDeviceIds) {
+            val device = inputManager.getInputDevice(id) ?: continue
+            if (isGamepadDevice(device)) {
+                connectDevice(id)
+            }
+        }
     }
 
     private fun isGamepadDevice(device: InputDevice?): Boolean {
@@ -94,6 +106,33 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
         val sources = device.sources
         return (sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD) ||
                 (sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK)
+    }
+
+    private fun connectDevice(deviceId: Int) {
+        if (connectedDeviceIds.add(deviceId)) {
+            val name = InputDevice.getDevice(deviceId)?.name
+            InputNativeInterface.sendJoystickConnected(deviceId, name)
+        }
+    }
+
+    private fun disconnectDevice(deviceId: Int) {
+        if (connectedDeviceIds.remove(deviceId)) {
+            currentDpadState = 0
+            InputNativeInterface.sendJoystickDisconnected(deviceId)
+        }
+    }
+
+    override fun onInputDeviceAdded(deviceId: Int) {
+        if (isGamepadDevice(InputDevice.getDevice(deviceId))) {
+            connectDevice(deviceId)
+        }
+    }
+
+    override fun onInputDeviceRemoved(deviceId: Int) {
+        disconnectDevice(deviceId)
+    }
+
+    override fun onInputDeviceChanged(deviceId: Int) {
     }
 
     private fun mapKeyCodeToButton(keyCode: Int): Int {
@@ -121,28 +160,5 @@ class PhysicalGamepadHandler : InputManager.InputDeviceListener {
             KeyEvent.KEYCODE_DPAD_LEFT -> 0x8
             else -> -1
         }
-    }
-
-    override fun onInputDeviceAdded(deviceId: Int) {
-        // Only notify the native side for actual gamepads, not for every input device
-        if (isGamepadDevice(InputDevice.getDevice(deviceId))) {
-            InputNativeInterface.sendJoystickConnected()
-        }
-    }
-
-    override fun onInputDeviceRemoved(deviceId: Int) {
-        // The device is already gone, so we can't check its sources here.
-        // Reset everything so the native side is not left with stuck inputs.
-        currentDpadState = 0
-        InputNativeInterface.sendJoystickDpad(0, 0.toChar())
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LX.code, 0f)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LY.code, 0f)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RX.code, 0f)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RY.code, 0f)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LT.code, 0f)
-        InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RT.code, 0f)
-    }
-
-    override fun onInputDeviceChanged(deviceId: Int) {
     }
 }

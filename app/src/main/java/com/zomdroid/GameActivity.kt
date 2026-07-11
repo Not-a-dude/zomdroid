@@ -7,7 +7,6 @@ import android.hardware.input.InputManager
 import android.os.Bundle
 import android.system.ErrnoException
 import android.util.Log
-import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -76,17 +75,16 @@ class GameActivity : ComponentActivity() {
             GameScreen(gameInstance)
         }
 
+        // Register the virtual on-screen controller so GLFW recognizes it
+        // before InputControlsView starts sending button/axis events.
+        InputNativeInterface.sendJoystickConnected(InputNativeInterface.VIRTUAL_CONTROLLER_ID, null)
+
         val inputManager = getSystemService(INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(gamepadHandler, null)
-
-        // Notify native side about already connected gamepads
-        for (id in inputManager.inputDeviceIds) {
-            val device = inputManager.getInputDevice(id)
-            if (device != null && (device.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD)) {
-                InputNativeInterface.sendJoystickConnected()
-                break
-            }
-        }
+        // Notify native side about already-connected physical gamepads.
+        // Deduplication inside PhysicalGamepadHandler prevents double-connect
+        // if onInputDeviceAdded fires for the same device.
+        gamepadHandler.notifyAlreadyConnectedDevices(inputManager)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {

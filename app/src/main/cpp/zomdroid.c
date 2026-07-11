@@ -462,60 +462,72 @@ void zomdroid_surface_init(ANativeWindow* wnd, int width, int height) {
 
 void zomdroid_event_keyboard(int key, bool isPressed) {
     ENQUEUE_EVENT({
-        e->type = KEYBOARD;
-        e->keyboard.key = key;
-        e->keyboard.is_pressed = isPressed;
+        e->payload.type = KEYBOARD;
+        e->payload.keyboard.key = key;
+        e->payload.keyboard.is_pressed = isPressed;
     });
 }
 
 void zomdroid_event_cursor_pos(double x, double y) {
     ENQUEUE_EVENT({
-        e->type = CURSOR_POS;
-        e->cursorPos.x = x;
-        e->cursorPos.y = y;
+        e->payload.type = CURSOR_POS;
+        e->payload.cursorPos.x = x;
+        e->payload.cursorPos.y = y;
     });
 }
 
 void zomdroid_event_mouse_button(int button, bool isPressed) {
     ENQUEUE_EVENT({
-        e->type = MOUSE_BUTTON;
-        e->mouseButton.button = button;
-        e->mouseButton.is_pressed = isPressed;
+        e->payload.type = MOUSE_BUTTON;
+        e->payload.mouseButton.button = button;
+        e->payload.mouseButton.is_pressed = isPressed;
     });
 }
 
-void zomdroid_event_joystick_connected() {
+void zomdroid_event_joystick_connected(int controllerId, const char* controllerName) {
+    const char* name = (controllerName != NULL) ? controllerName : "Zomdroid Controller"; // real name to physical controllers, "zomdroid controller" for on-screen
     ENQUEUE_EVENT({
-        e->type = JOYSTICK_CONNECTED;
-        // controller is described in GLFW mappings.h
-        e->joystickConnected.joystick_name = "Zomdroid Controller";
-        e->joystickConnected.joystick_guid = "00000000000000000000000000000000";
-        e->joystickConnected.axis_count = 6;
-        e->joystickConnected.button_count = 11;
-        e->joystickConnected.hat_count = 1;
+        e->controllerId = controllerId;
+        e->payload.type = JOYSTICK_CONNECTED;
+        snprintf(e->payload.joystickConnected.joystick_name,
+                 sizeof(e->payload.joystickConnected.joystick_name), "%s", name);
+        e->payload.joystickConnected.joystick_guid = "00000000000000000000000000000000";
+        e->payload.joystickConnected.axis_count = 6;
+        e->payload.joystickConnected.button_count = 11;
+        e->payload.joystickConnected.hat_count = 1;
     });
 }
 
-void zomdroid_event_joystick_axis(int axis, float state) {
+void zomdroid_event_joystick_disconnected(int controllerId) {
     ENQUEUE_EVENT({
-        e->type = JOYSTICK_AXIS;
-        e->joystickAxis.axis = axis;
-        e->joystickAxis.state = state;
+        e->controllerId = controllerId;
+        e->payload.type = JOYSTICK_DISCONNECTED;
     });
 }
 
-void zomdroid_event_joystick_dpad(int dpad, char state) {
+void zomdroid_event_joystick_axis(int controllerId, int axis, float state) {
     ENQUEUE_EVENT({
-        e->type = JOYSTICK_DPAD;
-        e->joystickDpad.dpad = dpad;
-        e->joystickDpad.state = state;
+        e->controllerId = controllerId;
+        e->payload.type = JOYSTICK_AXIS;
+        e->payload.joystickAxis.axis = axis;
+        e->payload.joystickAxis.state = state;
     });
 }
 
-void zomdroid_event_joystick_button(int button, bool is_pressed) {
+void zomdroid_event_joystick_dpad(int controllerId, int dpad, char state) {
     ENQUEUE_EVENT({
-        e->type = JOYSTICK_BUTTON;
-        e->joystickButton.button = button;
-        e->joystickButton.is_pressed = is_pressed;
+        e->controllerId = controllerId;
+        e->payload.type = JOYSTICK_DPAD;
+        e->payload.joystickDpad.dpad = dpad;
+        e->payload.joystickDpad.state = state;
+    });
+}
+
+void zomdroid_event_joystick_button(int controllerId, int button, bool is_pressed) {
+    ENQUEUE_EVENT({
+        e->controllerId = controllerId;
+        e->payload.type = JOYSTICK_BUTTON;
+        e->payload.joystickButton.button = button;
+        e->payload.joystickButton.is_pressed = is_pressed;
     });
 }

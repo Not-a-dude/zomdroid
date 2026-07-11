@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
     EventType type;
-    const char* joystick_name;
+    char joystick_name[128];
     const char* joystick_guid;
     int axis_count;
     int button_count;
@@ -82,6 +82,11 @@ typedef union {
     JoystickAxisEvent joystickAxis;
     JoystickDpadEvent joystickDpad;
     JoystickButtonEvent joystickButton;
+} ZomdroidEventPayload;
+
+typedef struct {
+    int controllerId;           // Android deviceId / controllerId
+    ZomdroidEventPayload payload;
 } ZomdroidEvent;
 
 #define EVENT_QUEUE_MAX 255

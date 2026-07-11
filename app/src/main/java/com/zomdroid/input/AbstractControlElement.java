@@ -163,13 +163,13 @@ public abstract class AbstractControlElement {
                 && binding.ordinal() <= GLFWBinding.GAMEPAD_MAX_ORDINAL) {
             switch (binding) {
                 case GAMEPAD_LTRIGGER:
-                    InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_LT.code, isPressed ? 1 : 0);
+                    InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_LT.code, isPressed ? 1 : 0);
                     break;
                 case GAMEPAD_RTRIGGER:
-                    InputNativeInterface.sendJoystickAxis(GLFWBinding.GAMEPAD_AXIS_RT.code, isPressed ? 1 : 0);
+                    InputNativeInterface.sendJoystickAxis(InputNativeInterface.VIRTUAL_CONTROLLER_ID, GLFWBinding.GAMEPAD_AXIS_RT.code, isPressed ? 1 : 0);
                     break;
                 default:
-                    InputNativeInterface.sendJoystickButton(binding.code, isPressed);
+                    InputNativeInterface.sendJoystickButton(InputNativeInterface.VIRTUAL_CONTROLLER_ID, binding.code, isPressed);
                     break;
             }
         }

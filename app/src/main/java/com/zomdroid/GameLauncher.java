@@ -5,7 +5,6 @@ import android.system.Os;
 import android.view.Surface;
 
 import com.zomdroid.data.GameSettings;
-import com.zomdroid.input.InputNativeInterface;
 import com.zomdroid.game.GameInstance;
 
 import java.util.ArrayList;
@@ -53,7 +52,6 @@ public class GameLauncher {
         initZomdroidWindow(settings.getRenderer().name(),
                 settings.getVulkanDriver().libName,
                 settings.getAudioAPI().name());
-        InputNativeInterface.sendJoystickConnected();
 
         ArrayList<String> jvmArgs = gameInstance.getJvmArgsAsList();
         jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + settings.getRenderer().libName);
