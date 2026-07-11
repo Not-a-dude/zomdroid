@@ -5,6 +5,20 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# Preserve JNI entry points resolved by exported symbol name.
+-keep class com.zomdroid.GameLauncher {
+    native <methods>;
+}
+
+-keep class com.zomdroid.input.InputNativeInterface {
+    native <methods>;
+}
+
+# Preserve names for any future JNI bridge classes/methods.
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
