@@ -55,13 +55,14 @@ extensions.configure<ApplicationExtension> {
     }
 
     buildTypes {
-        if (hasSigningConfig) {
-            release {
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
-                )
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            if (hasSigningConfig) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
