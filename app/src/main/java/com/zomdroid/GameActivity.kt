@@ -87,6 +87,11 @@ class GameActivity : ComponentActivity() {
         gamepadHandler.notifyAlreadyConnectedDevices(inputManager)
     }
 
+    override fun onDestroy() {
+        FMOD.close()
+        super.onDestroy()
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (gamepadHandler.onKeyDown(keyCode, event)) return true
         return super.onKeyDown(keyCode, event)
