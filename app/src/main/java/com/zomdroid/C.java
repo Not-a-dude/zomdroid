@@ -31,6 +31,7 @@ public class C {
 
         public static class keys {
             public static final String LAUNCHER_VERSION = "launcherVersion";
+            public static final String APK_LAST_UPDATE_TIME = "apkLastUpdateTime";
             public static final String INPUT_CONTROLS = "inputControls";
             public static final String GAME_INSTANCES = "gameInstances";
             public static final String LAUNCHER_PREFS = "launcherPrefs";

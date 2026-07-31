@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -62,14 +63,19 @@ public class ZomdroidApplication extends Application {
     private void updateLauncherVersion() {
         SharedPreferences prefs = getSharedPreferences(C.shprefs.NAME, MODE_PRIVATE);
         long savedVersion = prefs.getLong(C.shprefs.keys.LAUNCHER_VERSION, 0);
+        long savedUpdateTime = prefs.getLong(C.shprefs.keys.APK_LAST_UPDATE_TIME, 0);
         long currentVersion = 0;
+        long currentUpdateTime = 0;
         try {
-            currentVersion = getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode();
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            currentVersion = packageInfo.getLongVersionCode();
+            currentUpdateTime = packageInfo.lastUpdateTime;
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(LOG_TAG, e.toString());
         }
-        if (savedVersion == 0 || currentVersion != savedVersion) {
+        if (savedVersion == 0 || currentVersion != savedVersion || currentUpdateTime != savedUpdateTime) {
             prefs.edit().putLong(C.shprefs.keys.LAUNCHER_VERSION, currentVersion)
+                    .putLong(C.shprefs.keys.APK_LAST_UPDATE_TIME, currentUpdateTime)
                     .putBoolean(C.shprefs.keys.ARE_DEPENDENCIES_INSTALLED, false)
                     .apply();
         }
