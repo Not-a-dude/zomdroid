@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "9.3.1"
 kotlin = "2.4.0"
 gson = "2.14.0"
 junit = "4.13.2"
@@ -19,7 +19,7 @@ composeBom = "2026.06.01"
 activityCompose = "1.13.0"
 kotlinxCoroutines = "1.11.0"
 kotlinxSerialization = "1.11.0"
-material3 = "1.5.0-alpha23"
+material3 = "1.5.0-alpha25"
 datastore = "1.2.1"
 
 [libraries]
