@@ -7,7 +7,7 @@
 
 ## Features
 
-- Supports **Project Zomboid Build 41** (tested on 41.78.16) and **Build 42** (up to 42.7, versions 42.8 and later are not supported) 
+- Supports **Project Zomboid Build 41** (tested on 41.78.16) and **Build 42** (42.20 and maybe later/before versions) 
 - Supports **Lua mods**
 - Supports **physical controllers**
 - Currently **single-player only**
