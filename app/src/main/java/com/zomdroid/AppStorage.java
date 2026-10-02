@@ -8,15 +8,21 @@ import androidx.annotation.Nullable;
 
 
 public class AppStorage {
+    private final Context applicationContext;
     private final String HOME_DIR_PATH;
     private final String CACHE_DIR_PATH;
     private final String LIBRARY_DIR_PATH;
     private static AppStorage singleton;
 
     private AppStorage(Context applicationContext) {
+        this.applicationContext = applicationContext;
         HOME_DIR_PATH = applicationContext.getFilesDir().getAbsolutePath();
         CACHE_DIR_PATH = applicationContext.getCacheDir().getAbsolutePath();
         LIBRARY_DIR_PATH = applicationContext.getApplicationInfo().nativeLibraryDir;
+    }
+
+    public Context getApplicationContext() {
+        return applicationContext;
     }
 
     public static void init(Context applicationContext) {

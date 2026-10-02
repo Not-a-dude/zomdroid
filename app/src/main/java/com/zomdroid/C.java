@@ -5,7 +5,9 @@ public class C {
 
     public static class deps {
         public static final String ROOT = "dependencies";
-        public static final String JRE = ROOT + "/jre";
+        public static final String JRE_17 = ROOT + "/jre-17";
+        public static final String JRE_25 = ROOT + "/jre-25";
+        public static final String JRE_LEGACY = ROOT + "/jre"; // pre-multi-JRE versions installed here
         public static final String LIBS = ROOT + "/libs";
         public static final String JARS = ROOT + "/jars";
         public static final String LIBS_LINUX_X86_64 = LIBS + "/linux-x86_64";
@@ -14,13 +16,16 @@ public class C {
         public static final String LIBS_LWJGL_336 = LIBS_ANDROID_ARM64_v8a + "/lwjgl-3.3.6";
         public static final String LIBS_FMOD_20206 = LIBS_ANDROID_ARM64_v8a + "/fmod-2.02.06";
         public static final String LIBS_FMOD_20224 = LIBS_ANDROID_ARM64_v8a + "/fmod-2.02.24";
+        public static final String LIBS_FMOD_20309 = LIBS_ANDROID_ARM64_v8a + "/fmod-2.03.09";
         public static final String JARS_SQLITE_JDBC_34800 = JARS + "/sqlite-jdbc-3.48.0.0.jar";
+        public static final String JARS_FMOD = JARS + "/fmod.jar";
         public static final String JARS_ZOMDROID_AGENT = JARS + "/zomdroid-agent.jar";
     }
 
     public static class assets {
         public static final String BUNDLES = "bundles";
-        public static final String BUNDLES_JRE = BUNDLES + "/jre.tar.xz";
+        public static final String BUNDLES_JRE_17 = BUNDLES + "/jre17.tar.xz";
+        public static final String BUNDLES_JRE_25 = BUNDLES + "/jre25.tar.xz";
         public static final String BUNDLES_LIBS = BUNDLES + "/libs.tar.xz";
         public static final String BUNDLES_JARS = BUNDLES + "/jars.tar";
         public static final String DEFAULT_CONTROLS = "default_controls.json";

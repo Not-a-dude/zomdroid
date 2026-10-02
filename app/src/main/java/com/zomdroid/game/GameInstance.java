@@ -1,6 +1,7 @@
 package com.zomdroid.game;
 
 import com.zomdroid.AppStorage;
+import com.zomdroid.C;
 import com.zomdroid.FileUtils;
 
 import java.io.File;
@@ -26,6 +27,7 @@ public class GameInstance {
     private String mainClassName;
     private String javaAgentPath;
     private String javaAgentArgs;
+    private int jreVersion;
 
     public GameInstance(String name, InstallationPreset preset) throws FileSystemException {
         this.name = name;
@@ -40,6 +42,7 @@ public class GameInstance {
         this.mainClassName = preset.mainClassName;
         this.javaAgentPath = preset.javaAgentPath;
         this.javaAgentArgs = preset.javaAgentArgs;
+        this.jreVersion = preset.jreVersion;
     }
 
     private static String buildHomePath(String name) {
@@ -71,11 +74,20 @@ public class GameInstance {
         for (String path : this.libraryPathForEmulation) {
             joiner.add(AppStorage.requireSingleton().getHomePath() + "/" + path);
         }
+        joiner.add(getGamePath());
+        joiner.add(getGamePath() + "/natives");
         return joiner + ":.";
     }
 
     public String getFmodLibraryPath() {
         return fmodLibraryPath;
+    }
+
+    public String getJrePath() {
+        if (jreVersion == 25) {
+            return C.deps.JRE_25;
+        }
+        return C.deps.JRE_17;
     }
 
     public String getJavaLibraryPath() {
@@ -91,7 +103,8 @@ public class GameInstance {
         jvmArgsList.add("-Duser.home=" + this.homePath);
         jvmArgsList.add("-Djava.io.tmpdir=" + AppStorage.requireSingleton().getCachePath());
 
-        jvmArgsList.add("-Djava.library.path=" + getJavaLibraryPath() + ":.");
+        // arm64 game natives take priority
+        jvmArgsList.add("-Djava.library.path=" + getJavaLibraryPath() + ":.:./natives/android/arm64-v8a:./natives");
 
         //jvmArgsList.add("-Dorg.lwjgl.util.Debug=true"); // debug
 
@@ -101,7 +114,13 @@ public class GameInstance {
         }
         jvmArgsList.add("-Djava.class.path=" + String.join(":", this.classPath) + ":" + jarsJoiner);
 
-        jvmArgsList.addAll(Arrays.asList(this.extraJvmArgs));
+        for (String extraArg : this.extraJvmArgs) {
+            if ("-XX:+UseZGC".equals(extraArg)) {
+                jvmArgsList.add("-XX:+UseG1GC");
+            } else {
+                jvmArgsList.add(extraArg);
+            }
+        }
 
         if (!this.javaAgentPath.isEmpty()) {
             StringBuilder agentBuilder = new StringBuilder();
@@ -146,11 +165,17 @@ public class GameInstance {
 
     public boolean hasGameFiles() {
         File mainClassFile = new File(getGamePath() + "/" + getMainClassName() + ".class");
-        return mainClassFile.exists();
+        if (mainClassFile.exists()) return true;
+
+        File mainJarFile = new File(getGamePath() + "/projectzomboid.jar");
+        return mainJarFile.exists();
     }
 
     public boolean hasFilesForLinux() {
         File pzBulletFile = new File(getGamePath() + "/libPZBullet64.so");
-        return pzBulletFile.exists();
+        if (pzBulletFile.exists()) return true;
+
+        File pzBulletNativesFile = new File(getGamePath() + "/natives/libPZBullet64.so");
+        return pzBulletNativesFile.exists();
     }
 }

@@ -148,3 +148,8 @@ JNIEXPORT void JNICALL
 Java_com_zomdroid_input_InputNativeInterface_sendJoystickDisconnected(JNIEnv *env, jclass clazz, jint controllerId) {
     zomdroid_event_joystick_disconnected(controllerId);
 }
+
+JNIEXPORT void JNICALL
+Java_org_fmod_FMOD_SetOutputEnumerationChanged(JNIEnv *env, jclass clazz) {
+    LOGD("Java_org_fmod_FMOD_SetOutputEnumerationChanged stub called");
+}

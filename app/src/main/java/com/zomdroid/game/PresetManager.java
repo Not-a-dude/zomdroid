@@ -12,6 +12,7 @@ public class PresetManager {
                 .setName("Build 42")
                 .setClassPathArray(new String[]{
                         ".",
+                        "projectzomboid.jar",
                         "commons-compress-1.27.1.jar",
                         "commons-io-2.18.0.jar",
                         "istack-commons-runtime.jar",
@@ -43,13 +44,20 @@ public class PresetManager {
                 .setLibraryPathForEmulationArray(new String[]{
                         C.deps.LIBS_LINUX_X86_64
                 })
-                .setFmodLibraryPath(C.deps.LIBS_FMOD_20224)
-                .setExtraJvmArgs(new String[0])
+                .setFmodLibraryPath(C.deps.LIBS_FMOD_20309)
+                .setExtraJvmArgs(new String[]{
+                        "--enable-native-access=ALL-UNNAMED",
+                        "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
+                        "-XX:-OmitStackTraceInFastThrow",
+                        "-Djava.awt.headless=true",
+                        "-Dzomboid.znetlog=1"
+                })
                 .setArgs(new String[]{
                         "-novoip"
                 })
                 .setMainClassName("zombie/gameStates/MainScreenState")
                 .setJavaAgentPath(C.deps.JARS_ZOMDROID_AGENT)
+                .setJreVersion(25)
                 //.setJavaAgentArgs("build=42")
                 .build()
         );
@@ -90,6 +98,7 @@ public class PresetManager {
                 })
                 .setMainClassName("zombie/gameStates/MainScreenState")
                 .setJavaAgentPath(C.deps.JARS_ZOMDROID_AGENT)
+                .setJreVersion(17)
                 //.setJavaAgentArgs("build=41")
                 .build()
         );

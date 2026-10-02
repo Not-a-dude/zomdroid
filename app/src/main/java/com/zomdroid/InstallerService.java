@@ -174,21 +174,49 @@ public class InstallerService extends Service implements TaskProgressListener {
 
             HashMap<String, Long> newBundlesHashesMap = new HashMap<>();
 
-            Long jreHashOld = oldBundlesHashesMap.get(C.assets.BUNDLES_JRE);
-            try {
-                Long jreHashNew = FileUtils.generateCRC32ForAsset(this, C.assets.BUNDLES_JRE);
-                newBundlesHashesMap.put(C.assets.BUNDLES_JRE, jreHashNew);
-                if (jreHashOld == null || !jreHashOld.equals(jreHashNew)) {
-                    String jrePath = AppStorage.requireSingleton().getHomePath() + "/" + C.deps.JRE;
-                    File jreDir = new File(jrePath);
-                    if (jreDir.exists())
-                        FileUtils.deleteDirectory(jreDir);
-                    InputStream libsBundleInStream = getAssets().open(C.assets.BUNDLES_JRE);
-                    FileUtils.extractTarXzToDisk(libsBundleInStream, jrePath, this, 0);
+            HashMap<String, String> jreBundles = new HashMap<>();
+            jreBundles.put(C.assets.BUNDLES_JRE_17, C.deps.JRE_17);
+            jreBundles.put(C.assets.BUNDLES_JRE_25, C.deps.JRE_25);
+
+            boolean anyJreBundleFound = false;
+            for (String jreAsset : jreBundles.keySet()) {
+                String jreDest = jreBundles.get(jreAsset);
+                Long jreHashOld = oldBundlesHashesMap.get(jreAsset);
+                try {
+                    // Check if asset exists
+                    try {
+                        getAssets().open(jreAsset).close();
+                    } catch (IOException e) {
+                        Log.w(LOG_TAG, "JRE asset not found: " + jreAsset);
+                        continue;
+                    }
+                    anyJreBundleFound = true;
+
+                    Long jreHashNew = FileUtils.generateCRC32ForAsset(this, jreAsset);
+                    newBundlesHashesMap.put(jreAsset, jreHashNew);
+                    if (jreHashOld == null || !jreHashOld.equals(jreHashNew)) {
+                        String jrePath = AppStorage.requireSingleton().getHomePath() + "/" + jreDest;
+                        File jreDir = new File(jrePath);
+                        if (jreDir.exists())
+                            FileUtils.deleteDirectory(jreDir);
+                        InputStream libsBundleInStream = getAssets().open(jreAsset);
+                        FileUtils.extractTarXzToDisk(libsBundleInStream, jrePath, this, 0);
+                    }
+                } catch (IOException e) {
+                    finishWithError(getString(R.string.dialog_title_failed_to_install_dependencies), e.toString());
+                    return;
                 }
-            } catch (IOException e) {
-                finishWithError(getString(R.string.dialog_title_failed_to_install_dependencies), e.toString());
+            }
+
+            if (!anyJreBundleFound) {
+                finishWithError(getString(R.string.dialog_title_failed_to_install_dependencies),
+                        "No JRE bundle found in APK assets");
                 return;
+            }
+
+            File legacyJreDir = new File(AppStorage.requireSingleton().getHomePath() + "/" + C.deps.JRE_LEGACY);
+            if (legacyJreDir.exists() && !FileUtils.deleteDirectory(legacyJreDir)) {
+                Log.w(LOG_TAG, "Failed to delete legacy JRE directory " + legacyJreDir.getAbsolutePath());
             }
 
             Long libsHashOld = oldBundlesHashesMap.get(C.assets.BUNDLES_LIBS);

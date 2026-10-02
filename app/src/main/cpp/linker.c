@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <dlfcn.h>
 #include <android/dlext.h>
 #include <malloc.h>
@@ -30,7 +31,53 @@ static void* (*loader_android_dlopen_ext)(const char* filename,
 static void* vulkan_driver_handle;
 static void* vulkan_loader_handle;
 
-static EmulatedLib jni_libs[] = {{.name = "PZClipper64"}, {.name = "PZBullet64"}, {.name = "PZBulletNoOpenGL64"}, {.name = "Lighting64"}, {.name = "PZPathFind64"}, {.name = "PZPopMan64"}, {.name = "fmodintegration64"}, { .name = "zomdroidtest"} };
+// Handles of the native arm64 fmod core libraries as seen by the game JVM.
+// Their JNI layer (org.fmod.FMOD etc.) lives in ART and is initialized by GameActivity,
+// so JNI_OnLoad/JNI_OnUnload must be hidden from the game JVM (see dlsym below).
+#define FMOD_CORE_HANDLES_MAX 4
+static void* fmod_core_handles[FMOD_CORE_HANDLES_MAX];
+static int fmod_core_handle_count = 0;
+
+// Returns "libfmod.so" / "libfmodstudio.so" basename match for fmod core libraries
+static int is_fmod_core_lib(const char* filename) {
+    const char* base = strrchr(filename, '/');
+    base = base ? base + 1 : filename;
+    return strcmp(base, "libfmod.so") == 0 || strcmp(base, "libfmodstudio.so") == 0;
+}
+
+static void remember_fmod_core_handle(void* handle) {
+    if (handle == NULL) return;
+    for (int i = 0; i < fmod_core_handle_count; i++) {
+        if (fmod_core_handles[i] == handle) return;
+    }
+    if (fmod_core_handle_count < FMOD_CORE_HANDLES_MAX) {
+        fmod_core_handles[fmod_core_handle_count++] = handle;
+    }
+}
+
+static int is_fmod_core_handle(void* handle) {
+    for (int i = 0; i < fmod_core_handle_count; i++) {
+        if (fmod_core_handles[i] == handle) return 1;
+    }
+    return 0;
+}
+
+static EmulatedLib jni_libs[] = {
+    {.name = "PZClipper64"},
+    {.name = "PZBullet64"},
+    {.name = "PZBulletNoOpenGL64"},
+    {.name = "Lighting64"},
+    {.name = "PZPathFind64"},
+    {.name = "PZPopMan64"},
+    {.name = "fmodintegration64"},
+    {.name = "ZNetJNI64"},
+    {.name = "RakNet64"},
+    {.name = "bink64"},
+    {.name = "Bink2x64"},
+    {.name = "imgui-java64"},
+    {.name = "PZXInitThreads64"},
+    {.name = "zomdroidtest"}
+};
 static int jni_lib_count = sizeof (jni_libs) / sizeof (EmulatedLib);
 
 
@@ -545,6 +592,55 @@ void *dlopen(const char* filename, int flags) {
 
     if (filename == NULL) return loader_dlopen(NULL, flags, __builtin_return_address(0));
 
+    // Bypass box64 for native ARM64 libraries
+    char emulated_redirect[BUF_SIZE];
+    if (strstr(filename, "/android/arm64-v8a/")) {
+        // Certain Android builds in natives/android/arm64-v8a/ must be redirected to the
+        // desktop x86_64 builds in natives/ so Box64 emulates them:
+        // - libfmodintegration64.so: expects org.fmod.FMOD in game JVM (exists only in ART)
+        // - libLighting64.so, libPZPopMan64.so: outdated in PZ 42.20 depot and missing JNI exports
+        if (strstr(filename, "libfmodintegration64.so") ||
+            strstr(filename, "libLighting64.so") ||
+            strstr(filename, "libPZPopMan64.so")) {
+            const char* marker = strstr(filename, "android/arm64-v8a/");
+            if (marker != NULL) {
+                const char* base = strrchr(filename, '/');
+                base = base ? base + 1 : filename;
+                snprintf(emulated_redirect, sizeof(emulated_redirect),
+                         "%.*s%s", (int) (marker - filename), filename, base);
+                LOGI("Redirecting native arm64 %s to the emulated one: %s",
+                     base, emulated_redirect);
+                filename = emulated_redirect;
+            } else {
+                LOGI("Bypassing box64 for native arm64 library: %s", filename);
+                return loader_dlopen(filename, flags, __builtin_return_address(0));
+            }
+        } else {
+            LOGI("Bypassing box64 for native arm64 library: %s", filename);
+            return loader_dlopen(filename, flags, __builtin_return_address(0));
+        }
+    }
+
+    // The game JVM resolves System.loadLibrary("fmod")/("fmodstudio") to the desktop x86_64
+    // files in the game dir. Redirect to the native arm64 fmod core libraries instead (the same
+    // ones GameActivity already loaded on the ART side); their JNI_OnLoad is suppressed in dlsym
+    if (is_fmod_core_lib(filename)) {
+        const char* fmod_dir = getenv("ZOMDROID_FMOD_LIBRARY_DIR");
+        if (fmod_dir != NULL) {
+            const char* base = strrchr(filename, '/');
+            base = base ? base + 1 : filename;
+            char redirected[BUF_SIZE];
+            snprintf(redirected, sizeof(redirected), "%s/%s", fmod_dir, base);
+            void* handle = loader_dlopen(redirected, flags, __builtin_return_address(0));
+            if (handle != NULL) {
+                LOGI("Redirected dlopen of %s to native %s", filename, redirected);
+                remember_fmod_core_handle(handle);
+                return handle;
+            }
+            LOGE("Failed to redirect dlopen of %s to %s", filename, redirected);
+        }
+    }
+
     for (int i = 0; i < jni_lib_count; i++) {
         if (!strstr(filename, jni_libs[i].name)) continue;
 
@@ -590,6 +686,47 @@ __attribute__((visibility("default"), used))
 void *dlsym(void *handle, const char *sym_name) {
     LOGD("dlsym(handle=%p name=%s)", handle, sym_name);
 
+    // The native arm64 fmod core libraries are initialized through ART (GameActivity), where
+    // org.fmod.FMOD exists; calling their JNI_OnLoad with the game JVM would fail on missing
+    // android.* classes, so pretend they have no JNI entry points
+    if (sym_name != NULL && is_fmod_core_handle(handle) &&
+        (strncmp(sym_name, "JNI_OnLoad", 10) == 0 || strncmp(sym_name, "JNI_OnUnload", 12) == 0)) {
+        LOGI("Suppressing %s lookup for fmod core library", sym_name);
+        return NULL;
+    }
+
+    // On Android FMOD relies on Java for initialization, so we need to attach the game audio
+    // thread to ART VM. The lookup happens on the thread that is about to call the symbol,
+    // both when fmodintegration64 is emulated and when it is a native arm64 library
+    if (sym_name != NULL && strcmp(sym_name, "Java_fmod_javafmodJNI_FMOD_1System_1Create") == 0) {
+        JNIEnv* art_jni_env = NULL;
+        (*g_zomdroid_art_vm)->GetEnv(g_zomdroid_art_vm, (void **) &art_jni_env, JNI_VERSION_1_6);
+        if (art_jni_env == NULL) {
+            (*g_zomdroid_art_vm)->AttachCurrentThread(g_zomdroid_art_vm,
+                                                      (void **) &art_jni_env, NULL);
+        }
+        if (art_jni_env == NULL) {
+            LOGE("Failed to attach game FMOD thread to ART VM");
+        } else {
+            LOGD("Successfully attached game FMOD thread to ART VM");
+        }
+    }
+
+    if (sym_name != NULL && (strcmp(sym_name, "JNI_OnLoad") == 0 || strncmp(sym_name, "JNI_OnLoad_", 11) == 0 ||
+                             strcmp(sym_name, "JNI_OnUnload") == 0 || strncmp(sym_name, "JNI_OnUnload_", 13) == 0)) {
+        for (int i = 0; i < jni_lib_count; i++) {
+            struct library_s* lib = jni_libs[i].handle;
+            if (lib == NULL) continue;
+            struct lib_s* maplib = GetMaplib(lib);
+            uintptr_t box64_sym = FindGlobalSymbol(maplib, sym_name, -1, NULL, 0);
+            if (box64_sym == 0) continue;
+
+            LOGD("Found %s in emulated lib %s", sym_name, jni_libs[i].name);
+            void* sym = zomdroid_emulation_bridge_jni_symbol(&jni_libs[i], box64_sym, "pp", (sym_name[4] == 'O') ? 'i' : 'v');
+            if (sym) return sym;
+        }
+    }
+
     for (int i = 0; i < jni_lib_count; i++) {
         struct library_s* lib = jni_libs[i].handle;
         if (sym_name == NULL || handle == NULL || lib != handle) continue;
@@ -600,32 +737,24 @@ void *dlsym(void *handle, const char *sym_name) {
             return NULL;
         }
 
-        // On Android FMOD relies on Java for initialization, so we need to attach the game audio thread to ART VM
-        if (strcmp(sym_name, "Java_fmod_javafmodJNI_FMOD_1System_1Create") == 0) {
-            JNIEnv* art_jni_env = NULL;
-            (*g_zomdroid_art_vm)->GetEnv(g_zomdroid_art_vm, (void **) &art_jni_env, JNI_VERSION_1_6) ;
-            if (art_jni_env == NULL){
-                (*g_zomdroid_art_vm)->AttachCurrentThread(g_zomdroid_art_vm,
-                                                          (void **) &art_jni_env, NULL);
-            }
-            if (art_jni_env == NULL) {
-                LOGE("Failed to attach game FMOD thread to ART VM");
-            } else {
-                LOGD("Successfully attached game FMOD thread to ART VM");
-            }
-        }
-
-        char* method_sig = method_signature_from_symbol_name(sym_name);
-
-        if (method_sig == NULL) return NULL;
-
         char* arg_types = NULL;
         char ret_type = 0;
-        if (method_signature_to_types(method_sig, &arg_types, &ret_type) != 0) {
+
+        if (strcmp(sym_name, "JNI_OnLoad") == 0 || strncmp(sym_name, "JNI_OnLoad_", 11) == 0) {
+            arg_types = strdup("pp");
+            ret_type = 'i';
+        } else if (strcmp(sym_name, "JNI_OnUnload") == 0 || strncmp(sym_name, "JNI_OnUnload_", 13) == 0) {
+            arg_types = strdup("pp");
+            ret_type = 'v';
+        } else {
+            char* method_sig = method_signature_from_symbol_name(sym_name);
+            if (method_sig == NULL) return NULL;
+            if (method_signature_to_types(method_sig, &arg_types, &ret_type) != 0) {
+                free(method_sig);
+                return NULL;
+            }
             free(method_sig);
-            return NULL;
         }
-        free(method_sig);
 
         void* sym = zomdroid_emulation_bridge_jni_symbol(&jni_libs[i], box64_sym,
                                                          arg_types, ret_type);

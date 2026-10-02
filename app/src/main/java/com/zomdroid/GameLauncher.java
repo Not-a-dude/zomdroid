@@ -1,7 +1,10 @@
 package com.zomdroid;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.system.ErrnoException;
 import android.system.Os;
+import android.util.Log;
 import android.view.Surface;
 
 import com.zomdroid.data.GameSettings;
@@ -36,6 +39,11 @@ public class GameLauncher {
 
         Os.setenv("BOX64_LD_LIBRARY_PATH", gameInstance.getLdLibraryPathForEmulation(), false);
 
+        // Consumed by the zomdroid linker: dlopen of the desktop x86_64 libfmod.so/libfmodstudio.so
+        // from the game files is redirected to the native arm64 fmod core libraries in this directory
+        Os.setenv("ZOMDROID_FMOD_LIBRARY_DIR", AppStorage.requireSingleton().getHomePath() + "/"
+                + gameInstance.getFmodLibraryPath(), false);
+
         Os.setenv("GALLIUM_DRIVER", "zink", false);
 
         Os.setenv("ZOMDROID_CACHE_DIR", AppStorage.requireSingleton().getCachePath(), false);
@@ -54,6 +62,29 @@ public class GameLauncher {
                 settings.getAudioAPI().name());
 
         ArrayList<String> jvmArgs = gameInstance.getJvmArgsAsList();
+
+        boolean hasXmx = false;
+        for (String arg : jvmArgs) {
+            if (arg.startsWith("-Xmx")) {
+                hasXmx = true;
+                break;
+            }
+        }
+        if (!hasXmx) {
+            long totalRamMb = getSystemTotalRamMb();
+            long availRamMb = getSystemAvailableRamMb();
+
+            long maxHeapMb = getMaxHeapMb(totalRamMb);
+
+            Log.i("GameLauncher", "Calculated JVM Heap: totalRAM=" + totalRamMb + "MB, availRAM=" + availRamMb + "MB -> -Xmx" + maxHeapMb + "m");
+
+            jvmArgs.add("-Xms1024m");
+            jvmArgs.add("-Xmx" + maxHeapMb + "m");
+            jvmArgs.add("-XX:InitiatingHeapOccupancyPercent=45");
+            jvmArgs.add("-XX:+UnlockDiagnosticVMOptions");
+            jvmArgs.add("-XX:+UseG1GC");
+        }
+
         jvmArgs.add("-Dorg.lwjgl.opengl.libname=" + settings.getRenderer().libName);
         jvmArgs.add("-Dzomdroid.renderer=" + settings.getRenderer().name());
         //jvmArgs.add("-XX:+PrintFlagsFinal"); // for debugging
@@ -63,11 +94,57 @@ public class GameLauncher {
 /*        args.add("-debug");
         args.add("-debuglog=Shader");*/
 
-        String javaHomePath = AppStorage.requireSingleton().getHomePath() + "/" + C.deps.JRE;
+        String javaHomePath = AppStorage.requireSingleton().getHomePath() + "/" + gameInstance.getJrePath();
         String ldLibraryPath = AppStorage.requireSingleton().getLibraryPath() + ":/system/lib64:"
-                + javaHomePath + "/lib:" + javaHomePath + "/lib/server:" + gameInstance.getJavaLibraryPath();
+                + javaHomePath + "/lib:" + javaHomePath + "/lib/server:" + gameInstance.getJavaLibraryPath()
+                + ":" + gameInstance.getGamePath() + ":" + gameInstance.getGamePath() + "/natives"
+                + ":" + gameInstance.getGamePath() + "/natives/android/arm64-v8a";
+        Log.i("GameLauncher", "Launching " + gameInstance.getName()
+                + "\n jvmArgs=" + jvmArgs
+                + "\n ldLibraryPath=" + ldLibraryPath
+                + "\n args=" + args);
         GameLauncher.startGame(gameInstance.getGamePath(), ldLibraryPath, jvmArgs.toArray(new String[0]),
                 gameInstance.getMainClassName(), args.toArray(new String[0]));
+    }
+
+    private static long getMaxHeapMb(long totalRamMb) {
+        if (totalRamMb >= 10240) {
+            return 5120;
+        } else if (totalRamMb >= 6500) {
+            return 3328;
+        } else {
+            return 2560;
+        }
+    }
+
+    private static long getSystemTotalRamMb() {
+        try {
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            ActivityManager am = (ActivityManager) AppStorage.requireSingleton()
+                    .getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                am.getMemoryInfo(mi);
+                return mi.totalMem / (1024 * 1024);
+            }
+        } catch (Exception e) {
+            Log.w("GameLauncher", "Failed to query total RAM", e);
+        }
+        return -1;
+    }
+
+    private static long getSystemAvailableRamMb() {
+        try {
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            ActivityManager am = (ActivityManager) AppStorage.requireSingleton()
+                    .getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                am.getMemoryInfo(mi);
+                return mi.availMem / (1024 * 1024);
+            }
+        } catch (Exception e) {
+            Log.w("GameLauncher", "Failed to query available RAM", e);
+        }
+        return -1;
     }
 
 

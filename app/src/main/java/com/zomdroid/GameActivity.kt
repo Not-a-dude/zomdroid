@@ -25,9 +25,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.zomdroid.data.SettingsManager
 import com.zomdroid.game.GameInstance
 import com.zomdroid.game.GameInstanceManager
+import com.zomdroid.input.GLFWBinding
 import com.zomdroid.input.InputControlsView
 import com.zomdroid.input.InputNativeInterface
 import com.zomdroid.input.PhysicalGamepadHandler
+import android.view.Window
 import org.fmod.FMOD
 
 
@@ -79,6 +81,23 @@ class GameActivity : ComponentActivity() {
         // before InputControlsView starts sending button/axis events.
         InputNativeInterface.sendJoystickConnected(InputNativeInterface.VIRTUAL_CONTROLLER_ID, null)
 
+        // Intercept physical gamepad inputs at Window callback level before views swallow them
+        val originalCallback = window.callback
+        window.callback = object : Window.Callback by originalCallback {
+            override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+                if (event != null) {
+                    if (event.action == KeyEvent.ACTION_DOWN && gamepadHandler.onKeyDown(event.keyCode, event)) return true
+                    if (event.action == KeyEvent.ACTION_UP && gamepadHandler.onKeyUp(event.keyCode, event)) return true
+                }
+                return originalCallback.dispatchKeyEvent(event)
+            }
+
+            override fun dispatchGenericMotionEvent(event: MotionEvent?): Boolean {
+                if (event != null && gamepadHandler.onGenericMotionEvent(event)) return true
+                return originalCallback.dispatchGenericMotionEvent(event)
+            }
+        }
+
         val inputManager = getSystemService(INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(gamepadHandler, null)
         // Notify native side about already-connected physical gamepads.
@@ -92,27 +111,67 @@ class GameActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (gamepadHandler.onKeyDown(keyCode, event)) return true
-        return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (gamepadHandler.onKeyUp(keyCode, event)) return true
-        return super.onKeyUp(keyCode, event)
-    }
-
-    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
-        if (gamepadHandler.onGenericMotionEvent(event)) return true
-        return super.onGenericMotionEvent(event)
-    }
-
+    @SuppressLint("ClickableViewAccessibility")
     @Composable
     private fun GameScreen(gameInstance: GameInstance) {
         Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { context ->
                     SurfaceView(context).apply {
+                        // Touch-as-mouse: the game only understands GLFW cursor/button events.
+                        // InputControlsView sits on top and consumes touches over its own
+                        // elements, so only "empty" screen areas reach this listener.
+                        val renderScale = settingsManager.getSettingsSync().renderScale
+                        var mousePointerId = -1
+                        setOnTouchListener { _, e ->
+                            when (e.actionMasked) {
+                                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                                    val i = e.actionIndex
+                                    mousePointerId = e.getPointerId(i)
+                                    InputNativeInterface.sendCursorPos(
+                                        (e.getX(i) * renderScale).toDouble(),
+                                        (e.getY(i) * renderScale).toDouble()
+                                    )
+                                    InputNativeInterface.sendMouseButton(
+                                        GLFWBinding.MOUSE_BUTTON_LEFT.code, true
+                                    )
+                                    true
+                                }
+
+                                MotionEvent.ACTION_MOVE -> {
+                                    val i = e.findPointerIndex(mousePointerId)
+                                    if (i >= 0) {
+                                        InputNativeInterface.sendCursorPos(
+                                            (e.getX(i) * renderScale).toDouble(),
+                                            (e.getY(i) * renderScale).toDouble()
+                                        )
+                                        true
+                                    } else false
+                                }
+
+                                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                                    if (e.getPointerId(e.actionIndex) == mousePointerId) {
+                                        mousePointerId = -1
+                                        InputNativeInterface.sendMouseButton(
+                                            GLFWBinding.MOUSE_BUTTON_LEFT.code, false
+                                        )
+                                        true
+                                    } else false
+                                }
+
+                                MotionEvent.ACTION_CANCEL -> {
+                                    if (mousePointerId != -1) {
+                                        mousePointerId = -1
+                                        InputNativeInterface.sendMouseButton(
+                                            GLFWBinding.MOUSE_BUTTON_LEFT.code, false
+                                        )
+                                    }
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
                         holder.addCallback(object : SurfaceHolder.Callback {
                             override fun surfaceCreated(holder: SurfaceHolder) {
                                 Log.d(LOG_TAG, "Game surface created.")

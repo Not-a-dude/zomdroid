@@ -14,6 +14,7 @@ public class InstallationPreset {
     public final String mainClassName;
     public final String javaAgentPath;
     public final String javaAgentArgs;
+    public final int jreVersion;
 
     private InstallationPreset(Builder builder) {
         this.name = builder.name;
@@ -27,6 +28,7 @@ public class InstallationPreset {
         this.mainClassName = builder.mainClassName;
         this.javaAgentPath = builder.javaAgentPath;
         this.javaAgentArgs = builder.javaAgentArgs;
+        this.jreVersion = builder.jreVersion;
     }
 
     @NonNull
@@ -47,6 +49,7 @@ public class InstallationPreset {
         private String mainClassName = "";
         private String javaAgentPath = "";
         private String javaAgentArgs = "";
+        private int jreVersion = 17;
 
         public Builder setName(String name) {
             this.name = name;
@@ -100,6 +103,11 @@ public class InstallationPreset {
 
         public Builder setJavaAgentArgs(String javaAgentArgs) {
             this.javaAgentArgs = javaAgentArgs;
+            return this;
+        }
+
+        public Builder setJreVersion(int jreVersion) {
+            this.jreVersion = jreVersion;
             return this;
         }
 
