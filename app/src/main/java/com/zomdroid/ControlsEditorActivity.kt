@@ -366,7 +366,7 @@ fun <T> ExposedDropdown(
             readOnly = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
         )
         ExposedDropdownMenu(
@@ -413,7 +413,7 @@ fun IconDropdown(
                 )
             },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
         )
         ExposedDropdownMenu(

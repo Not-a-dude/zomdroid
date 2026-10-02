@@ -85,7 +85,7 @@ fun <T> NewGameInstanceContent(
                 readOnly = true,
                 label = { Text(stringResource(R.string.game_instance_preset)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                 colors = ExposedDropdownMenuDefaults.textFieldColors()
             )
             ExposedDropdownMenu(
